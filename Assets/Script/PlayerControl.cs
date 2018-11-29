@@ -13,19 +13,23 @@ public class PlayerControl : MonoBehaviour
     public LayerMask landLayer;
 
     public AudioSource m_audio;
-    public AudioClip slash, hit;
+    public AudioClip slash, hit, jumpSFX, saveSFX, successSFX, deadSFX;
 
     public GenMonster GM;
-    public Slider HP;
+    public Image[] Life;
+    public Canvas GameOver;
     Vector2 curVelocity;
 
     public bool airControl = true, facingRight = true, jump, inATK, inAirATK;
     public bool atkDone = true;
     public int atkCount = 0;
-    public int curHealth = 5;
+    int curLife = 5;
 
     public float lastAttackTime, attackPeriod = 0.5f;
     public List<GameObject> inRangedMonster;
+
+    Vector2 savePos;
+    bool isSaved = false, goNextLevel = false;
 
     Animator m_anim;
 
@@ -33,7 +37,8 @@ public class PlayerControl : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        HP.value = curHealth;
+        // Life = new Image[curLife];
+        GameOver.enabled = false;
         m_audio = GetComponent<AudioSource>();
         inATK = false;
         inAirATK = false;
@@ -69,8 +74,18 @@ public class PlayerControl : MonoBehaviour
     void Update()
     {
 
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            if (goNextLevel)
+            {
+                m_audio.PlayOneShot(successSFX);
+                UnityEngine.SceneManagement.SceneManager.LoadScene("Level_2");
+            }
+        }
+
         if (Input.GetKeyDown(KeyCode.Z))
         {
+            m_audio.PlayOneShot(jumpSFX);
             print("JUMP KEY");
             jump = true;
         }
@@ -79,45 +94,56 @@ public class PlayerControl : MonoBehaviour
         {
             if (onGround)
             {
-                m_audio.PlayOneShot(slash);
                 inATK = true;
-                while (inRangedMonster.Count > 0)
-                {
-                    GameObject t = inRangedMonster[0];
-                    inRangedMonster.RemoveAt(0);
-                    Instantiate(summonFx, new Vector3(t.transform.position.x + 0.05f, t.transform.position.y + 1.6f, 0), Quaternion.Euler(Vector3.zero));
-                    Destroy(t);
-                    m_audio.PlayOneShot(hit);
-                    GM.currNum--;
-                }
+
                 // foreach (var item in inRangedMonster)
                 // {
                 //     Destroy(item);
                 // }
                 m_anim.SetBool("atkDone", false);
                 lastAttackTime = Time.time;
-                if (atkCount == 0)
+                if (m_anim.GetCurrentAnimatorStateInfo(0).IsName("IDLE") || m_anim.GetCurrentAnimatorStateInfo(0).IsName("run"))
                 {
-                    m_anim.SetBool("atk1", true);
-                    atkCount++;
+                    if (atkCount == 0)
+                    {
+                        m_audio.PlayOneShot(slash);
+                        hitMonster();
+                        m_anim.SetBool("atk1", true);
+                        atkCount++;
+                    }
                 }
-                else if (atkCount == 1)
+                else if (m_anim.GetCurrentAnimatorStateInfo(0).IsName("atk1"))
                 {
-                    m_anim.SetBool("atk1", false);
-                    m_anim.SetBool("atk2", true);
-                    atkCount++;
+                    if (atkCount == 1)
+                    {
+                        m_audio.PlayOneShot(slash);
+                        hitMonster();
+                        m_anim.SetBool("atk1", false);
+                        m_anim.SetBool("atk2", true);
+                        atkCount++;
+                    }
                 }
-                else if (atkCount == 2)
+                else if (m_anim.GetCurrentAnimatorStateInfo(0).IsName("atk2"))
                 {
-                    m_anim.SetBool("atk2", false);
-                    m_anim.SetBool("atk3", true);
-                    atkCount++;
+                    if (atkCount == 2)
+                    {
+                        m_audio.PlayOneShot(slash);
+                        hitMonster();
+                        m_anim.SetBool("atk2", false);
+                        m_anim.SetBool("atk3", true);
+                        atkCount++;
+                    }
                 }
-                else if (atkCount == 3)
+                else if (m_anim.GetCurrentAnimatorStateInfo(0).IsName("atk3"))
                 {
-                    m_anim.SetBool("atk3", false);
-                    m_anim.SetBool("atk1", true);
-                    atkCount = 0;
+                    if (atkCount == 3)
+                    {
+                        m_audio.PlayOneShot(slash);
+                        hitMonster();
+                        m_anim.SetBool("atk3", false);
+                        m_anim.SetBool("atk1", true);
+                        atkCount = 1;
+                    }
                 }
             }
             else
@@ -134,6 +160,19 @@ public class PlayerControl : MonoBehaviour
         }
     }
 
+    void hitMonster()
+    {
+        while (inRangedMonster.Count > 0)
+        {
+            GameObject t = inRangedMonster[0];
+            inRangedMonster.RemoveAt(0);
+            Instantiate(summonFx, new Vector3(t.transform.position.x + 0.05f, t.transform.position.y + 1.6f, 0), Quaternion.Euler(Vector3.zero));
+            Destroy(t);
+            m_audio.PlayOneShot(hit);
+            GM.currNum--;
+        }
+    }
+
     void playHit()
     {
         m_audio.PlayOneShot(hit);
@@ -146,31 +185,61 @@ public class PlayerControl : MonoBehaviour
 
     private void OnCollisionEnter2D(Collision2D other)
     {
-        if (other.gameObject.tag == "Skeloton"){
-            curHealth -- ;
-            HP.value = curHealth;
-            if(curHealth < 1){
+        if (other.gameObject.tag == "Skeloton")
+        {
+
+            curLife--;
+            print (curLife);
+            if (isSaved)
+            {
+                transform.position = savePos;
+            }
+            Life[curLife].GetComponent<Image>().color = new Color32(0, 0, 0, 0);
+
+            if (curLife < 1)
+            {
+                m_audio.PlayOneShot(deadSFX);
                 GameOver.enabled = true;
+                Time.timeScale = 0;
             }
         }
     }
+
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         print(other.gameObject.tag);
 
+        if (other.gameObject.tag == "Save")
+        {
+            if (isSaved != true)
+            {
+                m_audio.PlayOneShot(saveSFX);
+                isSaved = true;
+                savePos = transform.position;
+            }
+        }
+
+        if (other.gameObject.tag == "Next")
+        {
+            goNextLevel = true;
+        }
 
         if (other.gameObject.tag == "Skeloton")
         {
+            // if (inAirATK)
+            // {
+            //     // playHit();
+            //     Destroy(other.gameObject);
+            //     Instantiate(summonFx, new Vector3(other.transform.position.x + 0.05f, other.transform.position.y + 1.6f, 0), Quaternion.Euler(Vector3.zero));
+            //     GM.currNum--;
+            // }
+            // else
+            inRangedMonster.Add(other.gameObject);
             if (inAirATK)
             {
-                // playHit();
-                Destroy(other.gameObject);
-                Instantiate(summonFx, new Vector3(other.transform.position.x + 0.05f, other.transform.position.y + 1.6f, 0), Quaternion.Euler(Vector3.zero));
-                GM.currNum--;
+                hitMonster();
             }
-            else
-                inRangedMonster.Add(other.gameObject);
         }
 
     }
@@ -184,6 +253,10 @@ public class PlayerControl : MonoBehaviour
             {
                 inRangedMonster.Remove(other.gameObject);
             }
+        }
+        if (other.gameObject.tag == "Next")
+        {
+            goNextLevel = false;
         }
     }
 

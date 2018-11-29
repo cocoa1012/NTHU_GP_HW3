@@ -12,7 +12,7 @@ public class GenMonster : MonoBehaviour
     void Start()
     {
         currNum = 0;
-        InvokeRepeating("GenItem", 2.0f, 3.0f);
+        InvokeRepeating("GenItem", 2.0f, 1.0f);
     }
 
     // Update is called once per frame

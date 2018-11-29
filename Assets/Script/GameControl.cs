@@ -13,4 +13,12 @@ public class GameControl : MonoBehaviour {
 	void Update () {
 		
 	}
+
+	public void ExitGame(){
+		Application.Quit();
+	}
+
+	public void Menu(){
+		UnityEngine.SceneManagement.SceneManager.LoadScene("Menu");
+	}
 }

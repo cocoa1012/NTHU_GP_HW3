@@ -133,6 +133,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa9901cc13c7f64caa2c8b2b037205f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  player: {fileID: 0}
+  exitFx: {fileID: 1271399178436950, guid: 70290649f47ac4141b22838cc39a7fa9, type: 2}
   m_speed: 0
 --- !u!212 &212108582398175972
 SpriteRenderer:

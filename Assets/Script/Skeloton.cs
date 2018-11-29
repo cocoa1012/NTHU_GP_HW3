@@ -6,14 +6,17 @@ public class Skeloton : MonoBehaviour
 {
 
     // Use this for initialization
-    GameObject player;
+    public GameObject player, exitFx;
     public float m_speed;
     bool facingRight;
+
+    GenMonster GM;
     void Start()
     {
         facingRight = true;
         m_speed = 7.0f;
         player = GameObject.Find("player");
+        GM = GameObject.Find("MonsterGen").GetComponent<GenMonster>();
     }
 
     // Update is called once per frame
@@ -24,21 +27,21 @@ public class Skeloton : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (player != null)
-        {
-            if (player.transform.position.x < transform.position.x && Mathf.Abs(player.transform.position.x - transform.position.x) > 1)
-            {
-                Move(-m_speed);
-            }
-            else if (player.transform.position.x > transform.position.x && Mathf.Abs(player.transform.position.x - transform.position.x) > 1)
-            {
-                Move(m_speed);
-            }
-            else
-            {
-                Move(0);
-            }
-        }
+        // if (player != null)
+        // {
+        //     if (player.transform.position.x < transform.position.x)
+        //     {
+        Move(-m_speed);
+        // }
+        //     else if (player.transform.position.x > transform.position.x)
+        //     {
+        //         Move(m_speed);
+        //     }
+        //     else
+        //     {
+        //         Move(0);
+        //     }
+        // }
 
     }
 
@@ -65,5 +68,15 @@ public class Skeloton : MonoBehaviour
         Vector3 characterScale = transform.localScale;
         characterScale.x *= -1;
         transform.localScale = characterScale;
+    }
+
+    private void OnCollisionEnter2D(Collision2D other)
+    {
+        if (other.gameObject.name == "left")
+        {
+            Instantiate(exitFx, new Vector3(transform.position.x + 0.05f, transform.position.y + 1.6f, 0), Quaternion.Euler(Vector3.zero));
+            Destroy(this.gameObject);
+            GM.currNum --;
+        }
     }
 }
