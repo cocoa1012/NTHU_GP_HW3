@@ -13,11 +13,12 @@ public class PlayerControl : MonoBehaviour
     public LayerMask landLayer;
 
     public AudioSource m_audio;
-    public AudioClip slash, hit, jumpSFX, saveSFX, successSFX, deadSFX;
+    public AudioClip slash, hit, jumpSFX, saveSFX, successSFX, deadSFX, crashSFX;
 
     public GenMonster GM;
     public Image[] Life;
     public Canvas GameOver;
+    public Text Hint;
     Vector2 curVelocity;
 
     public bool airControl = true, facingRight = true, jump, inATK, inAirATK;
@@ -29,7 +30,7 @@ public class PlayerControl : MonoBehaviour
     public List<GameObject> inRangedMonster;
 
     Vector2 savePos;
-    bool isSaved = false, goNextLevel = false;
+    bool isSaved = false, goNextLevel = false, isReviving = false;
 
     Animator m_anim;
 
@@ -38,6 +39,9 @@ public class PlayerControl : MonoBehaviour
     void Start()
     {
         // Life = new Image[curLife];
+        if (Hint != null){
+            Hint.enabled = false;
+        }
         GameOver.enabled = false;
         m_audio = GetComponent<AudioSource>();
         inATK = false;
@@ -66,7 +70,7 @@ public class PlayerControl : MonoBehaviour
         onGround = Physics2D.OverlapCircle(m_footPoint.transform.position, 0.1f, landLayer);
         print(onGround);
         mX = Input.GetAxis("Horizontal");
-        Move(mX, jump);
+        if (!isReviving) Move(mX, jump);
         jump = false;
     }
 
@@ -85,9 +89,17 @@ public class PlayerControl : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Z))
         {
-            m_audio.PlayOneShot(jumpSFX);
-            print("JUMP KEY");
-            jump = true;
+            if (!isReviving)
+            {
+                m_audio.PlayOneShot(jumpSFX);
+                print("JUMP KEY");
+                jump = true;
+            }
+            else{
+                isReviving = false;
+                m_rigid.gravityScale = 1;
+                Hint.enabled = false;
+            }
         }
 
         if (Input.GetKeyDown(KeyCode.X))
@@ -189,7 +201,7 @@ public class PlayerControl : MonoBehaviour
         {
 
             curLife--;
-            print (curLife);
+            print(curLife);
             if (isSaved)
             {
                 transform.position = savePos;
@@ -201,6 +213,14 @@ public class PlayerControl : MonoBehaviour
                 m_audio.PlayOneShot(deadSFX);
                 GameOver.enabled = true;
                 Time.timeScale = 0;
+            }
+            else
+            {
+                m_audio.PlayOneShot(crashSFX);
+                isReviving = true;
+                Hint.enabled = true;
+                m_rigid.gravityScale = 0;
+                m_rigid.velocity = new Vector2(0, 0);
             }
         }
     }
@@ -216,7 +236,8 @@ public class PlayerControl : MonoBehaviour
             {
                 m_audio.PlayOneShot(saveSFX);
                 isSaved = true;
-                savePos = transform.position;
+                GameObject s = GameObject.Find("save-file-option");
+                savePos = new Vector2(s.transform.position.x, s.transform.position.y + 1.0f);
             }
         }
 
