@@ -858,6 +858,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Info: {fileID: 0}
+  click: {fileID: 8300000, guid: 25b2eba2b045839428137d0abe422a36, type: 3}
+  player: {fileID: 833670966}
 --- !u!224 &650136408
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1109,6 +1111,9 @@ MonoBehaviour:
   lastAttackTime: 0
   attackPeriod: 0.5
   inRangedMonster: []
+  inRangedBoss: []
+  Queen: {fileID: 0}
+  inBoss: 0
 --- !u!4 &833670971 stripped
 Transform:
   m_PrefabParentObject: {fileID: 4149993720430876, guid: d82f2547f42374043ad7d9566215c59b,
@@ -1158,9 +1163,9 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: e0cd033373f495647835c88386e9ed74, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.79
   m_Pitch: 1
   Loop: 0
   Mute: 0

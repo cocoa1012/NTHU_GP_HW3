@@ -27,19 +27,24 @@ public class PlayerControl : MonoBehaviour
     int curLife = 5;
 
     public float lastAttackTime, attackPeriod = 0.5f;
-    public List<GameObject> inRangedMonster;
+    public List<GameObject> inRangedMonster, inRangedBoss;
 
     Vector2 savePos;
     bool isSaved = false, goNextLevel = false, isReviving = false;
 
+    public Boss Queen;
+
     Animator m_anim;
 
     bool onGround;
+    public bool inBoss = false;
     // Use this for initialization
     void Start()
     {
+        Time.timeScale = 1;
         // Life = new Image[curLife];
-        if (Hint != null){
+        if (Hint != null)
+        {
             Hint.enabled = false;
         }
         GameOver.enabled = false;
@@ -47,7 +52,7 @@ public class PlayerControl : MonoBehaviour
         inATK = false;
         inAirATK = false;
         lastAttackTime = Time.time;
-        jumpForce = 350.0f;
+        jumpForce = 400.0f;
         onGround = true;
         jump = false;
         speed = 7.0f;
@@ -95,7 +100,8 @@ public class PlayerControl : MonoBehaviour
                 print("JUMP KEY");
                 jump = true;
             }
-            else{
+            else
+            {
                 isReviving = false;
                 m_rigid.gravityScale = 1;
                 Hint.enabled = false;
@@ -119,7 +125,8 @@ public class PlayerControl : MonoBehaviour
                     if (atkCount == 0)
                     {
                         m_audio.PlayOneShot(slash);
-                        hitMonster();
+                        if (!inBoss) hitMonster();
+                        if (inBoss) hitBoss();
                         m_anim.SetBool("atk1", true);
                         atkCount++;
                     }
@@ -129,7 +136,8 @@ public class PlayerControl : MonoBehaviour
                     if (atkCount == 1)
                     {
                         m_audio.PlayOneShot(slash);
-                        hitMonster();
+                        if (!inBoss) hitMonster();
+                        if (inBoss) hitBoss();
                         m_anim.SetBool("atk1", false);
                         m_anim.SetBool("atk2", true);
                         atkCount++;
@@ -140,7 +148,8 @@ public class PlayerControl : MonoBehaviour
                     if (atkCount == 2)
                     {
                         m_audio.PlayOneShot(slash);
-                        hitMonster();
+                        if (!inBoss) hitMonster();
+                        if (inBoss) hitBoss();
                         m_anim.SetBool("atk2", false);
                         m_anim.SetBool("atk3", true);
                         atkCount++;
@@ -151,7 +160,8 @@ public class PlayerControl : MonoBehaviour
                     if (atkCount == 3)
                     {
                         m_audio.PlayOneShot(slash);
-                        hitMonster();
+                        if (!inBoss) hitMonster();
+                        if (inBoss) hitBoss();
                         m_anim.SetBool("atk3", false);
                         m_anim.SetBool("atk1", true);
                         atkCount = 1;
@@ -217,10 +227,13 @@ public class PlayerControl : MonoBehaviour
             else
             {
                 m_audio.PlayOneShot(crashSFX);
-                isReviving = true;
-                Hint.enabled = true;
-                m_rigid.gravityScale = 0;
-                m_rigid.velocity = new Vector2(0, 0);
+                if (isSaved)
+                {
+                    isReviving = true;
+                    Hint.enabled = true;
+                    m_rigid.gravityScale = 0;
+                    m_rigid.velocity = new Vector2(0, 0);
+                }
             }
         }
     }
@@ -229,6 +242,32 @@ public class PlayerControl : MonoBehaviour
     private void OnTriggerEnter2D(Collider2D other)
     {
         print(other.gameObject.tag);
+
+        if (other.gameObject.tag == "SnowBall")
+        {
+            if (!inRangedMonster.Contains(other.gameObject))
+            {
+                inRangedMonster.Add(other.gameObject);
+            }
+            else
+            {
+                curLife--;
+                print(curLife);
+                Life[curLife].GetComponent<Image>().color = new Color32(0, 0, 0, 0);
+
+                if (curLife < 1)
+                {
+                    m_audio.PlayOneShot(deadSFX);
+                    GameOver.enabled = true;
+                    Time.timeScale = 0;
+                }
+                else
+                {
+                    m_audio.PlayOneShot(crashSFX);
+                }
+
+            }
+        }
 
         if (other.gameObject.tag == "Save")
         {
@@ -263,6 +302,23 @@ public class PlayerControl : MonoBehaviour
             }
         }
 
+        if (other.gameObject.tag == "Boss")
+        {
+            // if (inAirATK)
+            // {
+            //     // playHit();
+            //     Destroy(other.gameObject);
+            //     Instantiate(summonFx, new Vector3(other.transform.position.x + 0.05f, other.transform.position.y + 1.6f, 0), Quaternion.Euler(Vector3.zero));
+            //     GM.currNum--;
+            // }
+            // else
+            inRangedBoss.Add(other.gameObject);
+            if (inAirATK)
+            {
+                hitBoss();
+            }
+        }
+
     }
 
     private void OnTriggerExit2D(Collider2D other)
@@ -279,8 +335,23 @@ public class PlayerControl : MonoBehaviour
         {
             goNextLevel = false;
         }
+        if (other.gameObject.tag == "Boss")
+        {
+            if (inRangedBoss.Contains(other.gameObject))
+            {
+                inRangedMonster.Remove(other.gameObject);
+            }
+        }
     }
 
+    void hitBoss()
+    {
+        print("inRangedBoss = " + inRangedBoss.Count);
+        if (inRangedBoss.Count > 0)
+        {
+            Queen.GetDMG();
+        }
+    }
     public void Move(float movingSpeed, bool jump)
     {
         //left / right moving actived only when the character is on the ground or air control is premitted

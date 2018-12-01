@@ -8,6 +8,8 @@ TagManager:
   - Skeloton
   - Next
   - Save
+  - SnowBall
+  - Boss
   layers:
   - Default
   - TransparentFX
